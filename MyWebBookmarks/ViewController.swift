@@ -27,7 +27,7 @@ class ViewController: UIViewController {
         } catch {
             print("ada error")
         }
-        performSegue(withIdentifier: "toTable", sender: nil)
+        performSegue(withIdentifier: "toTable", sender: self)
     }
     
     override func viewDidLoad() {
