@@ -15,7 +15,6 @@ class WebViewController: UIViewController {
     @IBOutlet weak var webScreen: UIWebView!
     
     func displayURL() {
-        print("Opening \(theURL!)")
         let myURLString = theURL!
         let myURL = NSURL(string: myURLString)
         let myURLRequest = NSURLRequest(url: myURL! as URL)

@@ -22,7 +22,7 @@ class TableViewController: UITableViewController {
             let results = try context.fetch(request)
             for url in results as! [NSManagedObject] {
                 let name = url.value(forKey: "url")
-                urls.append(name! as! String)
+                urls.append(name as! String)
             }
             
         } catch {
@@ -55,8 +55,63 @@ class TableViewController: UITableViewController {
     }
     */
 
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
+    /* Tadinya slide-to-delete ada disini, pindah ke editActionsForRowAt
+//    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+//        if editingStyle == .delete {
+//            
+//
+//        } else if editingStyle == .insert {
+//            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+//        }
+//    }
+    */
+    
+    override func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
+        let edit = UITableViewRowAction(style: .normal, title: "Edit") { (action, indexPath) in
+            let alertController = UIAlertController(title: "Edit URL", message: "Modify and confirm:", preferredStyle: .alert)
+            
+            let confirmAction = UIAlertAction(title: "Confirm", style: .default) { (_) in
+                if let field = alertController.textFields?[0] {
+                    // edit and store your data
+                    let appDel: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+                    let context: NSManagedObjectContext = appDel.persistentContainer.viewContext
+                    do {
+                        let request: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "Links")
+                        let results = try context.fetch(request)
+                        for url in results as! [NSManagedObject] {
+                            let name = url.value(forKey: "url")
+                            if name as! String == self.urls[indexPath.row] {
+                                url.setValue(field.text!, forKey: "url")
+                                do {
+                                    try context.save()
+                                    // update tampilan:
+                                    self.urls[indexPath.row] = field.text!
+                                    self.tableView.reloadData()
+                                } catch {
+                                    print("ada error")
+                                }
+                            }
+                        }
+                    } catch {
+                        print("error")
+                    }
+                }
+            }
+            
+            let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (_) in }
+            
+            alertController.addTextField { (textField) in
+//                textField.placeholder = "URL"
+                textField.text = self.urls[indexPath.row]
+            }
+            
+            alertController.addAction(confirmAction)
+            alertController.addAction(cancelAction)
+            
+            self.present(alertController, animated: true, completion: nil)
+
+        }
+        let delete = UITableViewRowAction(style: .destructive, title: "Delete") { (action, indexPath) in
             let appDel: AppDelegate = UIApplication.shared.delegate as! AppDelegate
             let context: NSManagedObjectContext = appDel.persistentContainer.viewContext
             do {
@@ -64,7 +119,7 @@ class TableViewController: UITableViewController {
                 let results = try context.fetch(request)
                 for url in results as! [NSManagedObject] {
                     let name = url.value(forKey: "url")
-                    if name as! String == urls[indexPath.row] {
+                    if name as! String == self.urls[indexPath.row] {
                         context.delete(url)
                         do {
                             try context.save()
@@ -79,10 +134,10 @@ class TableViewController: UITableViewController {
             // hapus di UI setelah hapus di CoreData! bila tidak index bisa kacau
             self.urls.remove(at: indexPath.row)
             self.tableView.deleteRows(at: [indexPath], with: UITableViewRowAnimation.fade)
-
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
         }
+        edit.backgroundColor = UIColor.blue
+        
+        return [edit, delete]
     }
 
     var selected: String?

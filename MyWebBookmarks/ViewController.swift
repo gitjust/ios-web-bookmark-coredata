@@ -17,17 +17,45 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var newLink: UITextField!
     @IBAction func addButton(_ sender: UIButton) {
+        if (newLink.text != "" && checkData()) {
+            let appDel: AppDelegate = UIApplication.shared.delegate as! AppDelegate
+            let context: NSManagedObjectContext = appDel.persistentContainer.viewContext
+            let entity = NSEntityDescription.entity(forEntityName: "Links", in: context)
+            let transc = NSManagedObject(entity: entity!, insertInto: context)
+            transc.setValue(newLink.text, forKey: "url")
+            do {
+                try context.save()
+            } catch {
+                print("ada error")
+            }
+            performSegue(withIdentifier: "toTable", sender: self)
+        }
+    }
+    
+    func checkData() -> Bool {
         let appDel: AppDelegate = UIApplication.shared.delegate as! AppDelegate
         let context: NSManagedObjectContext = appDel.persistentContainer.viewContext
-        let entity = NSEntityDescription.entity(forEntityName: "Links", in: context)
-        let transc = NSManagedObject(entity: entity!, insertInto: context)
-        transc.setValue(newLink.text, forKey: "url")
         do {
-            try context.save()
+            let request: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "Links")
+            let results = try context.fetch(request)
+            for url in results as! [NSManagedObject] {
+                let name = url.value(forKey: "url")
+                if name as! String == self.newLink.text! {
+                    // sudah ada!
+                    let alertController = UIAlertController(title: "Data Exists", message: "already in database", preferredStyle: .alert)
+                    
+                    let confirmAction = UIAlertAction(title: "Cancel", style: .cancel) { (_) in
+                            // do nothing
+                    }
+                    alertController.addAction(confirmAction)
+                    self.present(alertController, animated: true, completion: nil)
+                    return false
+                }
+            }
         } catch {
-            print("ada error")
+            print("error")
         }
-        performSegue(withIdentifier: "toTable", sender: self)
+        return true
     }
     
     override func viewDidLoad() {
